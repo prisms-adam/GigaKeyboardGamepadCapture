@@ -105,65 +105,6 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-/* 
-
-    <script>
-        let lastKeys = new Set();
-        let lastGamepadState = {};
-
-        function sendData(endpoint, data) {
-            let query = Object.keys(data).map(key => key + "=" + encodeURIComponent(data[key])).join("&");
-            fetch(endpoint + "?" + query);
-        }
-
-        document.addEventListener("keydown", function(event) {
-            if (!lastKeys.has(event.key)) {
-                sendData("/keypress", {char: event.key});
-                lastKeys.add(event.key);
-            }
-        });
-
-        document.addEventListener("keyup", function(event) {
-            lastKeys.delete(event.key);
-        });
-
-        window.addEventListener("gamepadconnected", function(event) {
-            console.log("Gamepad connected:", event.gamepad.id);
-            setInterval(checkGamepad, 100);
-        });
-
-        function checkGamepad() {
-            let gamepads = navigator.getGamepads();
-            if (!gamepads) return;
-
-            for (let i = 0; i < gamepads.length; i++) {
-                let gp = gamepads[i];
-                if (!gp) continue;
-
-                let newState = {};
-
-                gp.buttons.forEach((button, index) => {
-                    if (button.pressed && !lastGamepadState[index]) {
-                        sendData("/gamepad", {button: index});
-                    }
-                    newState[index] = button.pressed;
-                });
-
-                gp.axes.forEach((value, index) => {
-                    let roundedValue = value.toFixed(2);
-                    if (lastGamepadState[`axis${index}`] !== roundedValue) {
-                        sendData("/gamepad", {axis: index, value: roundedValue});
-                    }
-                    newState[`axis${index}`] = roundedValue;
-                });
-
-                lastGamepadState = newState;
-            }
-        }
-    </script>
-
- */
-
 void sendResponse(WiFiClient& client, const String& contentType, const String& content) {
     client.print("HTTP/1.1 200 OK\r\n");
     client.print("Content-Type: " + contentType + "\r\n");

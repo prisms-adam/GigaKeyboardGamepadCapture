@@ -6,7 +6,7 @@
 
 char ssid[] = "PRIS_Student";
 char pass[] = "wearethebest1";
-char hostname[] = "kemp";
+char hostname[] = "victor";
 
 WiFiUDP udp;
 MDNS mdns(udp);

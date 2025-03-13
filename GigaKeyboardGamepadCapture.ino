@@ -53,7 +53,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
     window.addEventListener("gamepadconnected", function(event) {
         console.log("Gamepad connected:", event.gamepad.id);
-        setInterval(checkGamepad, 100);
+        setInterval(checkGamepad, 200);
     });
 
     function checkGamepad() {

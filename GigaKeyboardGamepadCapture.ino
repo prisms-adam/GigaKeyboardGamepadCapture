@@ -5,7 +5,6 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoMDNS.h>
-#include <MemoryFree.h> //Download and install from https://github.com/mpflaga/Arduino-MemoryFree
 
 char ssid[] = "PRIS_Student";
 char pass[] = "wearethebest1";

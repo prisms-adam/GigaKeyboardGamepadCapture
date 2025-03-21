@@ -1,5 +1,6 @@
 // v0.2 - Added hostname service from ArduinoMDNS found in the Library Manager
 // v0.3 - Added realtime sensor data example read from A0, displays free SRAM, and removed unnecessary commented code
+// v0.4 - Added a terminal log
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -8,13 +9,15 @@
 
 char ssid[] = "PRIS_Student";
 char pass[] = "wearethebest1";
-char hostname[] = "EXAMPLE";
+char hostname[] = "example"; //Your hostname in lowercase
 
 WiFiUDP udp;
 MDNS mdns(udp);
 
 WiFiServer server(80);
 int status = WL_IDLE_STATUS; //Added to allow the Giga to connect to PRIS_Student
+
+String terminalText = "Example text";
 
 const char htmlPage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -25,14 +28,19 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         let lastKeys = new Set();
         let lastGamepadState = {};
     
-        function updateRAM() {
-          fetch('/ram')
+        function updateTerminal() {
+          fetch('/terminal')
           .then(response => response.text())
           .then(data => {
-              document.getElementById("freeSRAM").innerText = data;
+              document.getElementById("terminalData").innerHTML += data;
+              document.getElementById("terminalData").scrollTop = document.getElementById("terminalData").scrollHeight; //Auto-scroll to the bottom of the textbox
           });
         }
-        setInterval(updateRAM, 1000); // Update every second
+        setInterval(updateTerminal, 1000); // Update every second
+
+        function clearTerminal() {
+            document.getElementById("terminalData").value = ""; // Clears the text area
+        }
         
         function updateData() {
           fetch('/data')
@@ -111,8 +119,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       <h3>WiFi Bridge Controller - Giga v0.3</h3>
       <p>Keep this window active and start typing or using a gamepad.</p>
       <p>Check the Serial Monitor for received input.</p>
-      <p>Free SRAM: <span id="freeSRAM">0</span></p>
       <p>Example sensor data: <span id="sensorValue">0</span></p>
+      <textarea id="terminalData" rows=25 cols=60 autofocus input disabled></textarea>
+      <button onclick="clearTextbox()">Clear</button>
     </div>
   </body>
   </html>
@@ -163,23 +172,27 @@ void handleRequest(WiFiClient& client, const String& request) {
 
   if(request.indexOf("GET /data") >= 0){
     int sensorValue = analogRead(A0);
-    Serial.print("Sensor request: ");
-    Serial.println(sensorValue);
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/plain");
     client.println("Connection: close");
     client.println();
     client.println(String(sensorValue));
   }
-  else if(request.indexOf("GET /ram") >= 0){
-    int fram = freeMemory();
-    Serial.print("Free SRAM: ");
-    Serial.println(fram);
+  else if(request.indexOf("GET /terminal") >= 0){
+    unsigned long now = millis();
+    unsigned long seconds = now/1000;
+    unsigned long minutes = seconds/60;
+    unsigned long hours = minutes/60;
+    seconds %= 60;
+    minutes %= 60;
+    hours %= 24;
+    
+    String terminalTextTimestamp = "[" + String(hours) + ":" + String(minutes) + ":" + String(seconds) + "] " + terminalText;
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/plain");
     client.println("Connection: close");
     client.println();
-    client.println(String(fram));
+    client.println(terminalTextTimestamp);
   }
   else{
     client.println("HTTP/1.1 204 No Content");
@@ -239,6 +252,10 @@ void printWifiStatus() {
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
+
+  // print your board's hostname:
+  Serial.print("Hostname: ");
+  Serial.println(hostname);
 
   // print the received signal strength:
   long rssi = WiFi.RSSI();

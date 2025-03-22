@@ -16,7 +16,7 @@ MDNS mdns(udp);
 WiFiServer server(80);
 int status = WL_IDLE_STATUS; //Added to allow the Giga to connect to PRIS_Student
 
-String terminalText = "Example text";
+String terminalText = "Example Text"; //Use as the container for the text you want displayed in the terminal
 
 const char htmlPage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -26,19 +26,21 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <script>
         let lastKeys = new Set();
         let lastGamepadState = {};
+        var log = "";
     
         function updateTerminal() {
           fetch('/terminal')
           .then(response => response.text())
           .then(data => {
-              document.getElementById("terminalData").innerHTML += data;
+              log += data;
+              document.getElementById("terminalData").innerHTML = log;
               document.getElementById("terminalData").scrollTop = document.getElementById("terminalData").scrollHeight; //Auto-scroll to the bottom of the textbox
           });
         }
         setInterval(updateTerminal, 1000); // Update every second
 
         function clearTerminal() {
-            document.getElementById("terminalData").value = ""; // Clears the text area
+            log = ""; //Clears the terminal
         }
         
         function updateData() {
@@ -111,16 +113,20 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     text-align: center;
     font-family: courier;
   }
+  .clear-button{
+    display: block;
+    margin-left: auto;
+  }
   </style>
   <body>
     <div class="content">
       <h2>PRISMS Engineering</h2>
-      <h3>WiFi Bridge Controller - Giga v0.3</h3>
+      <h3>WiFi Bridge Controller - Giga v0.4</h3>
       <p>Keep this window active and start typing or using a gamepad.</p>
       <p>Check the Serial Monitor for received input.</p>
       <p>Example sensor data: <span id="sensorValue">0</span></p>
       <textarea id="terminalData" rows=25 cols=60 autofocus input disabled></textarea>
-      <button onclick="clearTextbox()">Clear</button>
+      <button class="clear-button" onclick="clearTerminal()">Clear</button>
     </div>
   </body>
   </html>
@@ -178,20 +184,44 @@ void handleRequest(WiFiClient& client, const String& request) {
     client.println(String(sensorValue));
   }
   else if(request.indexOf("GET /terminal") >= 0){
-    unsigned long now = millis();
-    unsigned long seconds = now/1000;
-    unsigned long minutes = seconds/60;
-    unsigned long hours = minutes/60;
-    seconds %= 60;
-    minutes %= 60;
-    hours %= 24;
-    
-    String terminalTextTimestamp = "[" + String(hours) + ":" + String(minutes) + ":" + String(seconds) + "] " + terminalText;
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/plain");
-    client.println("Connection: close");
-    client.println();
-    client.println(terminalTextTimestamp);
+    if(terminalText != ""){ //Don't send anything if there is nothing to send
+      unsigned long now = millis();
+      unsigned long seconds = now/1000;
+      unsigned long minutes = seconds/60;
+      unsigned long hours = minutes/60;
+      String s,m,h;
+      seconds %= 60;
+      minutes %= 60;
+      hours %= 24;
+  
+      if(seconds < 10){
+        s = "0" + String(seconds);
+      }
+      else{
+        s = String(seconds); 
+      }
+      
+      if(minutes < 10){
+        m = "0" + String(minutes);
+      }
+      else{
+        m = String(minutes); 
+      }
+      
+      if(hours < 10){
+        h = "0" + String(hours);
+      }
+      else{
+        h = String(hours); 
+      }
+      
+      String terminalTextTimestamp = "[" + h + ":" + m + ":" + s + "] " + terminalText;
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type: text/plain");
+      client.println("Connection: close");
+      client.println();
+      client.println(terminalTextTimestamp);
+    }
   }
   else{
     client.println("HTTP/1.1 204 No Content");
